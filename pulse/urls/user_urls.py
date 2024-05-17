@@ -1,5 +1,5 @@
 """
-URL configuration for PulseFlow project.
+URL configuration for djangoProject project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.0/topics/http/urls/
@@ -14,15 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from django.urls import path
 
-from pulse.views import *
+from pulse.views.user import *
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('user', include('pulse.urls.user_urls')),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
+    path('/get_users', UserListView.as_view()),
+    path('/<int:pk>', UserDetailView.as_view()),
+    path('', UserCreateView.as_view()),
 ]
