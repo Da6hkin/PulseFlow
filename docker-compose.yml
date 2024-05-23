@@ -1,20 +1,24 @@
 services:
-  postgres:
+  django:
+    build: .
+    container_name: django
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - pgdb
+
+  pgdb:
     image: postgres:16
     environment:
-      POSTGRES_DB: 'pulse_flow'
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'postgres'
-    ports:
-      - '5435:5432'
+        POSTGRES_DB: 'pulse_flow'
+        POSTGRES_USER: 'postgres'
+        POSTGRES_PASSWORD: 'postgres'
+    container_name: pgdb
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    networks:
-      - local
-
-networks:
-  local:
-    driver: bridge
-
 volumes:
   postgres-data:
+
