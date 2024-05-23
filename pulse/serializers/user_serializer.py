@@ -18,17 +18,17 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    is_project_manager = serializers.BooleanField(required=False, default=False)
+    disabled = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = User
-        fields = ("name", "surname", "password", "email", "is_project_manager")
+        fields = ("name", "surname", "password", "email", "disabled")
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(required=False)
-    is_project_manager = serializers.BooleanField(required=False)
+    disabled = serializers.BooleanField(required=False)
 
     class Meta:
         model = User
-        fields = ("password", "is_project_manager")
+        fields = ("password", "disabled")

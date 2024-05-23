@@ -19,7 +19,7 @@ from django.urls import path
 from pulse.views.user import *
 
 urlpatterns = [
-    path('/get_users', UserListView.as_view()),
+    path('/search', UserListView.as_view()),
     path('/<int:pk>', UserDetailView.as_view()),
     path('', UserCreateView.as_view()),
 ]
