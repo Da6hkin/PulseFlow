@@ -1,8 +1,7 @@
 from django.urls import path
 
-from pulse.views.auth import CustomTokenObtainPairView
-from pulse.views.user import *
+from pulse.views.auth import ObtainTokenView
 
 urlpatterns = [
-    path('/login', CustomTokenObtainPairView.as_view()),
+    path('/login', ObtainTokenView.as_view()),
 ]

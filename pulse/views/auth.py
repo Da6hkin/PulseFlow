@@ -1,22 +1,21 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework_simplejwt import exceptions
-from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken, UntypedToken
-from rest_framework import status, authentication
 from rest_framework.response import Response
+from rest_framework import views, permissions, status
 
-from pulse.auth.authentication import CustomAuthentication
-from pulse.models import User
-from pulse.serializers.auth_serializer import CustomTokenObtainPairSerializer, CustomTokenDetailSerializer
+from pulse.auth.authentication import JWTAuthentication
+from pulse.serializers.auth_serializer import ObtainTokenSerializer, CustomTokenDetailSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
+
+User = get_user_model()
 
 
 @extend_schema(tags=["Login"])
 @extend_schema_view(
     post=extend_schema(
         summary="Issue Jwt",
-        request=CustomTokenObtainPairSerializer,
+        request=ObtainTokenSerializer,
         responses={
             status.HTTP_200_OK: CustomTokenDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
@@ -25,40 +24,21 @@ from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetai
         }
     )
 )
-class CustomTokenObtainPairView(TokenObtainPairView):
-    authentication_classes = [CustomAuthentication]
+class ObtainTokenView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ObtainTokenSerializer
 
     def post(self, request, *args, **kwargs):
-        user = request.user
-        if user is None:
-            return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        refresh = RefreshToken.for_user(user)
+        email = serializer.validated_data.get('email')
+        password = serializer.validated_data.get('password')
 
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        })
+        user = User.objects.filter(email=email).first()
+        if user is None or not check_password(password, user.password):
+            return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
-# class CustomJWTAuthentication(authentication.BaseAuthentication):
-#     def authenticate(self, request):
-#         jwt_token = request.headers.get('Authorization', None)
-#         if jwt_token is None:
-#             raise exceptions.AuthenticationFailed('No token provided')
-#         try:
-#             untyped_token = UntypedToken(jwt_token.split(' ')[1])
-#         except (InvalidToken, Exception) as e:
-#             raise exceptions.AuthenticationFailed('Invalid token')
-#
-#         try:
-#             email = untyped_token['email']  # Adjust the key according to your payload
-#             user = User.objects.get(email=email)
-#         except User.DoesNotExist:
-#             raise exceptions.AuthenticationFailed('No such user')
-#
-#         # Assuming you have stored the user's email in the token, and you want to check it each time
-#         if not user.password == untyped_token['email']:  # Adjust 'email' claim as per your token structure
-#             raise exceptions.AuthenticationFailed('Email not matched')
-#
-#         # Return the user and token
-#         return (user, untyped_token)
+        jwt_token = JWTAuthentication.create_jwt(user)
+
+        return Response({'token': jwt_token})

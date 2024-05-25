@@ -2,11 +2,12 @@ from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, generics
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.user_filter import UserFilter
 from pulse.models import User
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
@@ -50,7 +51,7 @@ from pulse.serializers.user_serializer import UserListSerializer, UserDetailSeri
 )
 class UserDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-
+    permission_classes = [IsAuthenticated]
     def get_user(self, pk):
         try:
             return User.objects.get(pk=pk)
@@ -84,7 +85,7 @@ class UserDetailView(APIView):
         summary="Create user",
         request=UserCreateSerializer,
         responses={
-            status.HTTP_200_OK: UserCreateSerializer,
+            status.HTTP_200_OK: UserDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
@@ -95,9 +96,14 @@ class UserCreateView(APIView):
     def post(self, request):
         user = UserCreateSerializer(data=request.data)
         user.is_valid(raise_exception=True)
-        user.password = make_password(user.password)
-        user.save()
-        return Response(user.data, status=status.HTTP_201_CREATED)
+        saved_user = user.save()
+        return_data = {
+            "name": saved_user.name,
+            "surname": saved_user.surname,
+            "email": saved_user.email,
+            "disabled": saved_user.disabled
+        }
+        return Response(return_data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=["Users"])
@@ -113,6 +119,9 @@ class UserCreateView(APIView):
     )
 )
 class UserListView(generics.ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     queryset = User.objects.all()
     serializer_class = UserListSerializer
     filter_backends = (DjangoFilterBackend,)

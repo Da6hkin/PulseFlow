@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'drf_spectacular',
-    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -54,7 +53,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',)
+    'DEFAULT_AUTHENTICATION_CLASSES': ['pulse.auth.authentication.JWTAuthentication']
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -78,20 +77,10 @@ TEMPLATES = [
     },
 ]
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
-
+JWT_CONF = {
+    'TOKEN_LIFETIME_HOURS': 5,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': 'your_secret_key',
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
+    'SECRET_KEY': 'your_secret_key',
 }
 
 WSGI_APPLICATION = 'PulseFlow.wsgi.application'
@@ -111,6 +100,7 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = "pulse.User"
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
