@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
 from pulse.models import User
@@ -6,15 +7,13 @@ from pulse.models import User
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ("password",)
+        fields = ("name", "surname", "email", "disabled")
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
-    # category = serializers.SlugRelatedField(slug_field="name",read_only=True)
-    # slug_field = field in another table
     class Meta:
         model = User
-        exclude = ("password",)
+        fields = ("name", "surname", "email", "disabled")
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -23,6 +22,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("name", "surname", "password", "email", "disabled")
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

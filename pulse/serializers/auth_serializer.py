@@ -1,11 +1,10 @@
 from rest_framework import serializers
 
 
-class CustomTokenObtainPairSerializer(serializers.Serializer):
+class ObtainTokenSerializer(serializers.Serializer):
     email = serializers.CharField()
     password = serializers.CharField()
 
 
 class CustomTokenDetailSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
-    access = serializers.CharField()
+    token = serializers.CharField()
