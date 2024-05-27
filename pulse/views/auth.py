@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample
 from rest_framework.response import Response
 from rest_framework import views, permissions, status
 
@@ -21,7 +21,18 @@ User = get_user_model()
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-        }
+        },
+        examples=[
+            OpenApiExample(
+                'Example',
+                description="Example with default values",
+                value={
+                    'email': 'user@example.com',
+                    'password': 'string',
+                }
+            )
+        ],
+        auth=[]
     )
 )
 class ObtainTokenView(views.APIView):

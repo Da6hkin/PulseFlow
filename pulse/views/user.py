@@ -52,6 +52,7 @@ from pulse.serializers.user_serializer import UserListSerializer, UserDetailSeri
 class UserDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
     def get_user(self, pk):
         try:
             return User.objects.get(pk=pk)
@@ -89,7 +90,8 @@ class UserDetailView(APIView):
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-        }
+        },
+        auth=[]
     )
 )
 class UserCreateView(APIView):
