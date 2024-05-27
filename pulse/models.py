@@ -17,11 +17,14 @@ RATE_TYPES = (
 
 
 class User(AbstractUser):
+    username = None
     name = models.CharField(max_length=100, null=False)
     surname = models.CharField(max_length=100, null=False)
     password = models.CharField(max_length=100, null=False)
-    email = models.EmailField(max_length=100, unique=True)
+    email = models.EmailField(max_length=255, unique=True)
     disabled = models.BooleanField(default=False)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
 
 class Company(models.Model):
