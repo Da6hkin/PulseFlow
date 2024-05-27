@@ -28,7 +28,7 @@ class Company(models.Model):
     name = models.CharField(max_length=100)
     unique_identifier = models.CharField(max_length=100, unique=True)
     website = models.URLField(max_length=200, null=True)
-    logo = models.BinaryField(null=True)
+    logo = models.ImageField(upload_to='logo/', verbose_name='logo', null=True)
 
 
 class Employee(models.Model):
@@ -44,7 +44,6 @@ class Project(models.Model):
     start_date = models.DateField(auto_now_add=True)
     end_date = models.DateField(null=True)
     income = models.FloatField(null=True)
-    #
 
 
 class ProjectManager(models.Model):

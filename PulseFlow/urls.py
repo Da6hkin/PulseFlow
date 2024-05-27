@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/user', include('pulse.urls.user_urls')),
     path('api/auth', include('pulse.urls.auth_urls')),
+    path('api/company', include('pulse.urls.company_urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]

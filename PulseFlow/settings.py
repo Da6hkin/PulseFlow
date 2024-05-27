@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -24,7 +25,11 @@ SECRET_KEY = 'django-insecure-0eu_&29%s#jgtsa6z4#-zgzbi%dx)ba@tf!i$e*bxl$lkit!5+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["37.27.30.55"]
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'
+
+ALLOWED_HOSTS = ["37.27.30.55", "localhost"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,12 +41,14 @@ INSTALLED_APPS = [
     'pulse',
     'rest_framework',
     'django_filters',
+    'corsheaders',
     'drf_spectacular',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
