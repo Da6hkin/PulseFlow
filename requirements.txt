@@ -9,3 +9,4 @@ django-cors-headers~=4.3.1
 django-extensions~=3.2.3
 Werkzeug~=3.0.3
 pyOpenSSL~=24.1.0
+gunicorn~=22.0.0
