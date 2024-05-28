@@ -29,7 +29,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
 
-ALLOWED_HOSTS = ["37.27.30.55", "localhost"]
+ALLOWED_HOSTS = ["37.27.30.55", "localhost", "www.pulseflow.xyz", "pulseflow.xyz"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -114,8 +114,6 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "pulse.User"
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
