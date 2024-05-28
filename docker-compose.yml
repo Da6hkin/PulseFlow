@@ -8,8 +8,6 @@ services:
       - "8000"
     volumes:
       - .:/app
-      - /var/www/static/:/var/www/static/
-      - /var/certbot/conf:/etc/letsencrypt/:ro
     depends_on:
       - pgdb
 
@@ -26,23 +24,17 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   nginx:
-    image: nginx:alpine
-    restart: unless-stopped
+    image: nginx:latest
+    container_name: nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/www/static/:/var/www/static/
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - .:/app
     depends_on:
       - django
-  certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - /var/certbot/conf:/etc/letsencrypt/:rw
-      - /var/certbot/www/:/var/www/certbot/:rw
-    depends_on:
-      - nginx
 volumes:
   postgres-data:
 
