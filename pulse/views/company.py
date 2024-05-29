@@ -16,6 +16,7 @@ from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetai
 
 @extend_schema(tags=["Company"])
 @extend_schema(
+    summary="Create company",
     request={
         'multipart/form-data': {
             'type': 'object',

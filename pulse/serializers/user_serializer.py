@@ -7,13 +7,13 @@ from pulse.models import User
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("name", "surname", "email", "disabled")
+        fields = ("id", "name", "surname", "email", "disabled")
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("name", "surname", "email", "disabled")
+        fields = ("id", "name", "surname", "email", "disabled")
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

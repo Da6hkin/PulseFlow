@@ -132,3 +132,26 @@ class UserListView(generics.ListAPIView):
     def get_queryset(self):
         users = User.objects.all()
         return users
+
+
+@extend_schema(tags=["Users"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Detailed info about user by jwt",
+        responses={
+            status.HTTP_200_OK: UserDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    ),
+)
+class UserDetailViewByJWT(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserDetailSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

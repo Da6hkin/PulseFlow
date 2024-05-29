@@ -40,12 +40,15 @@ class Employee(models.Model):
     is_project_manager = models.BooleanField(default=False)
     disabled = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ('user', 'company',)
+
 
 class Project(models.Model):
     name = models.CharField(max_length=100)
-    description = models.TextField(max_length=1000, null=True)
-    start_date = models.DateField(auto_now_add=True)
-    end_date = models.DateField(null=True)
+    description = models.CharField(max_length=5000, null=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField(null=True)
     income = models.FloatField(null=True)
 
 
@@ -53,6 +56,9 @@ class ProjectManager(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     disabled = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('employee', 'project',)
 
 
 class Task(models.Model):
