@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from pulse.models import Project
+from pulse.serializers.company_serializer import CompanyDetailSerializer
 
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
@@ -9,7 +10,7 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ("name", "description", "start_date", "end_date", "income",)
+        fields = ("company", "name", "description", "start_date", "end_date", "income",)
 
 
 class ProjectUpdateSerializer(serializers.ModelSerializer):
@@ -24,6 +25,7 @@ class ProjectUpdateSerializer(serializers.ModelSerializer):
 
 
 class ProjectListSerializer(serializers.ModelSerializer):
+    company = CompanyDetailSerializer(read_only=True)
 
     class Meta:
         model = Project
@@ -31,6 +33,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
+    company = CompanyDetailSerializer(read_only=True)
+
     class Meta:
         model = Project
         fields = "__all__"

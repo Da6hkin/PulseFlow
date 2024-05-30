@@ -7,43 +7,43 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
-from pulse.filters.project_filter import ProjectFilter
-from pulse.models import Project
+from pulse.filters.assigned_filter import AssignedFilter
+from pulse.models import Assigned
+from pulse.serializers.assigned_serializer import AssignedCreateSerializer, AssignedDetailSerializer, \
+    AssignedUpdateSerializer, AssignedListSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
-from pulse.serializers.project_serializer import ProjectCreateSerializer, ProjectDetailSerializer, \
-    ProjectUpdateSerializer, ProjectListSerializer
 
 
-@extend_schema(tags=["Project"])
+@extend_schema(tags=["Assigned"])
 @extend_schema_view(
     post=extend_schema(
-        summary="Create project",
-        request=ProjectCreateSerializer,
+        summary="Create assigned",
+        request=AssignedCreateSerializer,
         responses={
-            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_200_OK: AssignedDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
         },
     )
 )
-class ProjectCreateView(APIView):
+class AssignedCreateView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        employee = ProjectCreateSerializer(data=request.data)
-        employee.is_valid(raise_exception=True)
-        employee.save()
-        return Response(employee.data, status=status.HTTP_201_CREATED)
+        assigned = AssignedCreateSerializer(data=request.data)
+        assigned.is_valid(raise_exception=True)
+        assigned.save()
+        return Response(assigned.data, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(tags=["Project"])
+@extend_schema(tags=["Assigned"])
 @extend_schema_view(
     get=extend_schema(
-        summary="Detailed info about project",
+        summary="Detailed info about assigned",
         responses={
-            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_200_OK: AssignedDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
@@ -51,10 +51,10 @@ class ProjectCreateView(APIView):
         }
     ),
     put=extend_schema(
-        summary="Update project",
-        request=ProjectUpdateSerializer,
+        summary="Update assigned",
+        request=AssignedUpdateSerializer,
         responses={
-            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_200_OK: AssignedDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
@@ -62,7 +62,7 @@ class ProjectCreateView(APIView):
         }
     ),
     delete=extend_schema(
-        summary="Delete project",
+        summary="Delete assigned",
         responses={
             status.HTTP_200_OK: DummyDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
@@ -72,56 +72,56 @@ class ProjectCreateView(APIView):
         }
     )
 )
-class ProjectDetailView(APIView):
+class AssignedDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get_project(self, pk):
+    def get_assigned(self, pk):
         try:
-            return Project.objects.get(pk=pk)
-        except Project.DoesNotExist:
-            raise Http404("Project does not exist")
+            return Assigned.objects.get(pk=pk)
+        except Assigned.DoesNotExist:
+            raise Http404("Assigned does not exist")
 
     def get(self, request, pk):
-        project = self.get_project(pk)
-        serializer = ProjectDetailSerializer(project)
+        assigned = self.get_assigned(pk)
+        serializer = AssignedDetailSerializer(assigned)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        project = self.get_project(pk)
-        serializer = ProjectUpdateSerializer(project, data=request.data)
+        assigned = self.get_assigned(pk)
+        serializer = AssignedUpdateSerializer(assigned, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        updated_project = ProjectDetailSerializer(project)
-        return Response(updated_project.data, status=status.HTTP_200_OK)
+        updated_assigned = AssignedDetailSerializer(assigned)
+        return Response(updated_assigned.data, status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        project = self.get_project(pk)
-        project.delete()
+        assigned = self.get_assigned(pk)
+        assigned.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@extend_schema(tags=["Project"])
+@extend_schema(tags=["Assigned"])
 @extend_schema_view(
     get=extend_schema(
-        summary="Search projects",
+        summary="Search assigned",
         responses={
-            status.HTTP_200_OK: ProjectListSerializer,
+            status.HTTP_200_OK: AssignedListSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
         }
     )
 )
-class ProjectListView(generics.ListAPIView):
+class AssignedListView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    queryset = Project.objects.all()
-    serializer_class = ProjectListSerializer
+    queryset = Assigned.objects.all()
+    serializer_class = AssignedListSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = ProjectFilter
+    filterset_class = AssignedFilter
 
     def get_queryset(self):
-        projects = Project.objects.all()
-        return projects
+        assigned = Assigned.objects.all()
+        return assigned

@@ -45,6 +45,7 @@ class Employee(models.Model):
 
 
 class Project(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=5000, null=True)
     start_date = models.DateTimeField(auto_now_add=True)
@@ -62,15 +63,15 @@ class ProjectManager(models.Model):
 
 
 class Task(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=300)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     state = models.CharField(max_length=100, choices=STATE)
     priority = models.IntegerField()
-    description = models.TextField(max_length=1000, null=True)
-    planned_start_date = models.DateField()
-    planned_end_date = models.DateField()
-    actual_start_date = models.DateField(null=True)
-    actual_end_date = models.DateField(null=True)
+    description = models.CharField(max_length=1000, null=True)
+    planned_start_date = models.DateTimeField()
+    planned_end_date = models.DateTimeField()
+    actual_start_date = models.DateTimeField(null=True)
+    actual_end_date = models.DateTimeField(null=True)
 
 
 class Assigned(models.Model):
