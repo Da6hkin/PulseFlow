@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.company_filter import CompanyFilter
-from pulse.models import Company
+from pulse.models import Company, Employee
 from pulse.serializers.company_serializer import CompanyDetailSerializer, CompanyListSerializer, CompanyUpdateSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 
@@ -132,3 +132,28 @@ class CompanyListView(generics.ListAPIView):
     def get_queryset(self):
         users = Company.objects.all()
         return users
+
+
+@extend_schema(tags=["Company"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Get companies by jwt",
+        responses={
+            status.HTTP_200_OK: CompanyListSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    ),
+)
+class CompanyDetailViewByJWT(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        employees = Employee.objects.filter(user_id=user.id)
+        companies = Company.objects.filter(id__in=employees.values('company_id'))
+        serializer = CompanyListSerializer(companies,many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
