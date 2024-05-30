@@ -7,43 +7,43 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
-from pulse.filters.project_filter import ProjectFilter
-from pulse.models import Project
+from pulse.filters.task_filter import TaskFilter
+from pulse.models import Task
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
-from pulse.serializers.project_serializer import ProjectCreateSerializer, ProjectDetailSerializer, \
-    ProjectUpdateSerializer, ProjectListSerializer
+from pulse.serializers.task_serializer import TaskCreateSerializer, TaskDetailSerializer, TaskUpdateSerializer, \
+    TaskListSerializer
 
 
-@extend_schema(tags=["Project"])
+@extend_schema(tags=["Task"])
 @extend_schema_view(
     post=extend_schema(
-        summary="Create project",
-        request=ProjectCreateSerializer,
+        summary="Create task",
+        request=TaskCreateSerializer,
         responses={
-            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_200_OK: TaskDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
         },
     )
 )
-class ProjectCreateView(APIView):
+class TaskCreateView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        employee = ProjectCreateSerializer(data=request.data)
-        employee.is_valid(raise_exception=True)
-        employee.save()
-        return Response(employee.data, status=status.HTTP_201_CREATED)
+        task = TaskCreateSerializer(data=request.data)
+        task.is_valid(raise_exception=True)
+        task.save()
+        return Response(task.data, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(tags=["Project"])
+@extend_schema(tags=["Task"])
 @extend_schema_view(
     get=extend_schema(
-        summary="Detailed info about project",
+        summary="Detailed info about task",
         responses={
-            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_200_OK: TaskDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
@@ -51,10 +51,10 @@ class ProjectCreateView(APIView):
         }
     ),
     put=extend_schema(
-        summary="Update project",
-        request=ProjectUpdateSerializer,
+        summary="Update task",
+        request=TaskUpdateSerializer,
         responses={
-            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_200_OK: TaskDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
@@ -62,7 +62,7 @@ class ProjectCreateView(APIView):
         }
     ),
     delete=extend_schema(
-        summary="Delete project",
+        summary="Delete task",
         responses={
             status.HTTP_200_OK: DummyDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
@@ -72,56 +72,56 @@ class ProjectCreateView(APIView):
         }
     )
 )
-class ProjectDetailView(APIView):
+class TaskDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get_project(self, pk):
+    def get_task(self, pk):
         try:
-            return Project.objects.get(pk=pk)
-        except Project.DoesNotExist:
+            return Task.objects.get(pk=pk)
+        except Task.DoesNotExist:
             raise Http404("Project does not exist")
 
     def get(self, request, pk):
-        project = self.get_project(pk)
-        serializer = ProjectDetailSerializer(project)
+        task = self.get_task(pk)
+        serializer = TaskDetailSerializer(task)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        project = self.get_project(pk)
-        serializer = ProjectUpdateSerializer(project, data=request.data)
+        task = self.get_task(pk)
+        serializer = TaskUpdateSerializer(task, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        updated_project = ProjectDetailSerializer(project)
-        return Response(updated_project.data, status=status.HTTP_200_OK)
+        updated_task = TaskDetailSerializer(task)
+        return Response(updated_task.data, status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        project = self.get_project(pk)
-        project.delete()
+        task = self.get_task(pk)
+        task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@extend_schema(tags=["Project"])
+@extend_schema(tags=["Task"])
 @extend_schema_view(
     get=extend_schema(
-        summary="Search projects",
+        summary="Search tasks",
         responses={
-            status.HTTP_200_OK: ProjectListSerializer,
+            status.HTTP_200_OK: TaskListSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
             status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
             status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
         }
     )
 )
-class ProjectListView(generics.ListAPIView):
+class TaskListView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    queryset = Project.objects.all()
-    serializer_class = ProjectListSerializer
+    queryset = Task.objects.all()
+    serializer_class = TaskListSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = ProjectFilter
+    filterset_class = TaskFilter
 
     def get_queryset(self):
-        projects = Project.objects.all()
-        return projects
+        tasks = Task.objects.all()
+        return tasks
