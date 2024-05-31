@@ -1,0 +1,125 @@
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { serverURL } from 'src/config'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { RootState } from '.'
+
+interface RequestProject {
+  company: number
+  name: string
+  description: string
+  start_date: string
+  end_date: string
+  income: number
+}
+
+export interface IProject {
+  id?: number
+  company: {
+    id: number
+    name: string
+    unique_identifier: string
+    website: string
+    logo: string
+  }
+  name: string
+  description: string
+  start_date: string
+  end_date: string
+  income: number
+}
+
+interface UpdateProject {
+  description?: string
+  start_date?: string
+  end_date?: string
+  income?: number
+}
+
+interface SearchProjectRequest {
+  company?: string
+  end_date?: string
+  id?: string
+  income?: string
+  name?: string
+  order_by?: '-id' | 'id' | '-name' | 'name' |'-start_date' | 'start_date' |'-end_date' | 'end_date' |'-income' | 'income'
+}
+
+export const ProjectApi = createApi({
+  reducerPath: 'ProjectApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: `${serverURL}/api/project`,
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`)
+      }
+      return headers
+    }
+  }),
+  tagTypes: ['Project'],
+  endpoints: (builder) => ({
+    createProject: builder.mutation<RequestProject, IProject>({
+      query: (project) => ({
+        url: '',
+        method: 'POST',
+        body: project
+      }),
+      invalidatesTags: [{ type: 'Project', id: 'LIST' }]
+    }),
+    searchProject: builder.query<IProject[], SearchProjectRequest>({
+      query: (params) => ({
+        url: '/search',
+        method: 'GET',
+        body: params
+      }),
+      providesTags: [{ type: 'Project', id: 'LIST' }]
+    }),
+    getProject: builder.query<IProject, string>({
+      query: (projectId) => ({
+        url: `/${projectId}`,
+        method: 'GET'
+      })
+    }),
+    updateProject: builder.mutation<IProject, { project: UpdateProject, projectId: string }>({
+      query: ({ project, projectId }) => ({
+        url: `/${projectId}`,
+        method: 'PUT',
+        body: project
+      }),
+      invalidatesTags: [{ type: 'Project', id: 'LIST' }]
+    })
+  })
+})
+
+export const {
+  useCreateProjectMutation,
+  useSearchProjectQuery,
+  useGetProjectQuery,
+  useUpdateProjectMutation
+} = ProjectApi
+
+interface ProjectState {
+  project: IProject[]
+}
+
+const initialState: ProjectState = {
+  project: []
+}
+
+const projectSlice = createSlice({
+  name: 'project',
+  initialState,
+  reducers: {
+    setProjectState: (state, action: PayloadAction<IProject[]>) => {
+      state.project = action.payload
+    }
+  }
+})
+
+export const { setProjectState } = projectSlice.actions
+
+export const selectProjectState = (state: RootState) => state?.project.project
+
+export default projectSlice.reducer
