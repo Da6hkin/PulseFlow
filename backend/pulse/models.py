@@ -1,18 +1,17 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 STATE = (
     ('todo', 'To Do'),
     ('research', 'Research'),
     ('in_progress', 'In Progress'),
-    ('testing', 'testing'),
-    ('done', 'done'),
+    ('testing', 'Testing'),
+    ('done', 'Done'),
 )
 
 RATE_TYPES = (
-    ('FIXED', 'Fixed Price'),
-    ('HOUR', 'Hour rate')
+    ('fixed', 'Fixed'),
+    ('hour', 'Hour Rate')
 )
 
 
@@ -31,7 +30,6 @@ class Company(models.Model):
     name = models.CharField(max_length=100)
     unique_identifier = models.CharField(max_length=100, unique=True)
     website = models.URLField(max_length=200, null=True)
-    logo = models.ImageField(upload_to='logo/', verbose_name='logo', null=True)
 
 
 class Employee(models.Model):
@@ -70,8 +68,6 @@ class Task(models.Model):
     description = models.CharField(max_length=1000, null=True)
     planned_start_date = models.DateTimeField()
     planned_end_date = models.DateTimeField()
-    actual_start_date = models.DateTimeField(null=True)
-    actual_end_date = models.DateTimeField(null=True)
 
 
 class Assigned(models.Model):

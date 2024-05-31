@@ -7,8 +7,6 @@ from pulse.serializers.project_serializer import ProjectDetailSerializer
 class TaskCreateSerializer(serializers.ModelSerializer):
     state = serializers.ChoiceField(choices=STATE)
     priority = serializers.IntegerField(required=False, min_value=1, max_value=5)
-    actual_start_date = serializers.DateTimeField(required=False)
-    actual_end_date = serializers.DateTimeField(required=False)
 
     class Meta:
         model = Task
@@ -22,14 +20,11 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
     planned_start_date = serializers.DateTimeField(required=False)
     planned_end_date = serializers.DateTimeField(required=False)
-    actual_start_date = serializers.DateTimeField(required=False)
-    actual_end_date = serializers.DateTimeField(required=False)
 
     class Meta:
         model = Task
         fields = (
-            "name", "state", "priority", "description", "planned_start_date", "planned_end_date", "actual_start_date",
-            "actual_end_date",)
+            "name", "state", "priority", "description", "planned_start_date", "planned_end_date",)
 
 
 class TaskListSerializer(serializers.ModelSerializer):
