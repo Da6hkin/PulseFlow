@@ -18,8 +18,7 @@ class CompanyDetailSerializer(serializers.ModelSerializer):
 class CompanyUpdateSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=False)
     website = serializers.URLField(required=False)
-    logo = serializers.ImageField(required=False)
 
     class Meta:
         model = Company
-        fields = ("name", "website", "logo")
+        fields = ("name", "website",)

@@ -38,3 +38,12 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = "__all__"
+
+
+class AddEmployeeToCompanySerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    company_id = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Employee
+        fields = ("email", "company_id",)

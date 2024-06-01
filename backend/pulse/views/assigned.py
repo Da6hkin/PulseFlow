@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.assigned_filter import AssignedFilter
-from pulse.models import Assigned
+from pulse.models import Assigned, Employee
 from pulse.serializers.assigned_serializer import AssignedCreateSerializer, AssignedDetailSerializer, \
     AssignedUpdateSerializer, AssignedListSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
@@ -125,3 +125,39 @@ class AssignedListView(generics.ListAPIView):
     def get_queryset(self):
         assigned = Assigned.objects.all()
         return assigned
+
+
+@extend_schema(tags=["Assigned"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Check if user can change assigned",
+        responses={
+            status.HTTP_200_OK: AssignedDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    )
+)
+class AssignedDetailViewByJWT(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_assigned(self, pk):
+        try:
+            return Assigned.objects.get(pk=pk)
+        except Assigned.DoesNotExist:
+            raise Http404("Assigned does not exist")
+
+    def get(self, request, pk):
+        assigned = self.get_assigned(pk)
+        user_id = request.user.id
+        try:
+            employee = Employee.objects.get(user_id=user_id, company_id=assigned.task.project.company.id)
+        except Employee.DoesNotExist:
+            raise Http404("User is not employee in this company")
+        if assigned.employee == employee:
+            return Response(True, status=status.HTTP_200_OK)
+        else:
+            return Response(False, status=status.HTTP_200_OK)
