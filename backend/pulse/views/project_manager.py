@@ -107,3 +107,6 @@ class ProjectManagerListView(generics.ListAPIView):
     def get_queryset(self):
         projects = ProjectManager.objects.all()
         return projects
+
+
+

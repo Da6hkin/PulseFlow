@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.project_filter import ProjectFilter
-from pulse.models import Project
+from pulse.models import Project, Employee, ProjectManager, Task, Assigned, RATE_TYPES
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 from pulse.serializers.project_serializer import ProjectCreateSerializer, ProjectDetailSerializer, \
     ProjectUpdateSerializer, ProjectListSerializer
@@ -125,3 +125,107 @@ class ProjectListView(generics.ListAPIView):
     def get_queryset(self):
         projects = Project.objects.all()
         return projects
+
+
+@extend_schema(tags=["Project"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Is user a project manager",
+        responses={
+            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    )
+)
+class ProjectDetailViewByJWT(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_project(self, project_id):
+        try:
+            return Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            raise Http404("Project does not exist")
+
+    def get(self, request, project_id):
+        project = self.get_project(project_id)
+        user_id = request.user.id
+        try:
+            employee = Employee.objects.get(user_id=user_id, company_id=project.company.id)
+        except Employee.DoesNotExist:
+            raise Http404("User is not employee in this company")
+        try:
+            project_manager = ProjectManager.objects.get(employee_id=employee.id, project_id=project.id)
+            if project_manager:
+                return Response(True, status=status.HTTP_200_OK)
+        except ProjectManager.DoesNotExist:
+            return Response(False, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Project"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Project Finances",
+        responses={
+            status.HTTP_200_OK: ProjectDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    )
+)
+class ProjectDetailViewFinance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_project(self, project_id):
+        try:
+            return Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            raise Http404("Project does not exist")
+
+    def get(self, request, project_id):
+        project = self.get_project(project_id)
+        user_id = request.user.id
+        try:
+            employee = Employee.objects.get(user_id=user_id, company_id=project.company.id)
+        except Employee.DoesNotExist:
+            raise Http404("You are not part of the company")
+        try:
+            project_manager = ProjectManager.objects.get(employee_id=employee.id, project_id=project.id)
+            if project_manager:
+                tasks = Task.objects.filter(project_id=project.id, state='done')
+                assigned = Assigned.objects.filter(task_id__in=tasks.values('id'))
+                assigned_to_return = {}
+                all_to_pay = 0
+                for assign in assigned:
+                    if assign.rate_type:
+                        salary = None
+                        if assign.rate_type == 'fixed':
+                            salary = assign.rate
+                        else:
+                            if assign.task.hours_spent > 0:
+                                salary = assign.rate * assign.task.hours_spent
+                        assigned_user = assign.employee.user
+                        name = f"{assigned_user.email}"
+                        task = assign.task
+                        if salary is not None:
+                            all_to_pay += salary
+                            if name not in assigned_to_return:
+                                assigned_to_return[name] = []
+                            assigned_to_return[name].append(
+                                {"task_id": task.id, "name": task.name, "salary": salary,
+                                 "hours_spent": task.hours_spent})
+                return_data = {
+                    "income": project.income,
+                    "tasks": assigned_to_return,
+                    "profit": project.income - all_to_pay,
+                }
+                return Response(return_data, status=status.HTTP_200_OK)
+
+        except ProjectManager.DoesNotExist:
+            raise Http404("You are not allowed to perform this request")

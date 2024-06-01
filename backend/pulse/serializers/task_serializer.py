@@ -20,11 +20,12 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
     planned_start_date = serializers.DateTimeField(required=False)
     planned_end_date = serializers.DateTimeField(required=False)
+    hours_spent = serializers.IntegerField(required=False)
 
     class Meta:
         model = Task
         fields = (
-            "name", "state", "priority", "description", "planned_start_date", "planned_end_date",)
+            "name", "state", "priority", "description", "planned_start_date", "planned_end_date", "hours_spent",)
 
 
 class TaskListSerializer(serializers.ModelSerializer):

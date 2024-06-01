@@ -8,10 +8,11 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.employee_filter import EmployeeFilter
-from pulse.models import Employee
+from pulse.models import Employee, User, Company
 from pulse.serializers.employee_serializer import EmployeeCreateSerializer, EmployeeDetailSerializer, \
-    EmployeeUpdateSerializer, EmployeeListSerializer
+    EmployeeUpdateSerializer, EmployeeListSerializer, AddEmployeeToCompanySerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
+
 
 
 @extend_schema(tags=["Employee"])
@@ -128,3 +129,43 @@ class EmployeeListView(generics.ListAPIView):
         return employees
 
 
+@extend_schema(tags=["Employee"])
+@extend_schema_view(
+    post=extend_schema(
+        summary="Invite employee to company",
+        request=AddEmployeeToCompanySerializer,
+        responses={
+            status.HTTP_200_OK: EmployeeDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    ),
+)
+class EmployeeDetailViewAddToCompany(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AddEmployeeToCompanySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data.get('email')
+        company_id = serializer.validated_data.get('company_id')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise Http404("User with given email does not exist")
+        try:
+            company = Company.objects.get(id=company_id)
+        except Company.DoesNotExist:
+            raise Http404("Company with given id does not exist")
+        try:
+            existing_employee = Employee.objects.get(user_id=user.id, company_id=company.id)
+            if existing_employee:
+                raise Http404("Employee already exist in company")
+        except Employee.DoesNotExist:
+            new_employee = Employee(user=user, company=company, is_project_manager=False, disabled=False)
+            new_employee.save()
+            saved_employee = EmployeeDetailSerializer(new_employee)
+            return Response(saved_employee.data, status=status.HTTP_200_OK)

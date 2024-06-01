@@ -15,31 +15,22 @@ from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetai
 
 
 @extend_schema(tags=["Company"])
-@extend_schema(
-    summary="Create company",
-    request={
-        'multipart/form-data': {
-            'type': 'object',
-            'properties': {
-                'name': {'type': 'string', 'example': 'Company Name'},
-                'unique_identifier': {'type': 'string', 'example': 'unique-id-123'},
-                'website': {'type': 'string', 'example': 'https://www.example.com'},
-                'logo': {'type': 'string', 'format': 'binary'}
-            },
-            'required': ['name', 'unique_identifier']
+@extend_schema_view(
+    post=extend_schema(
+        summary="Create company",
+        request=CompanyDetailSerializer,
+        responses={
+            status.HTTP_200_OK: CompanyDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
         }
-    },
-    responses={
-        status.HTTP_201_CREATED: CompanyDetailSerializer,
-        status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-        status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-        status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-    },
+    ),
 )
 class CompanyCreateView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
         company = CompanyDetailSerializer(data=request.data)
@@ -62,17 +53,7 @@ class CompanyCreateView(APIView):
     ),
     put=extend_schema(
         summary="Update company",
-        request={
-            'multipart/form-data': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string', 'example': 'New Company Name'},
-                    'website': {'type': 'string', 'example': 'https://www.example_new.com'},
-                    'logo': {'type': 'string', 'format': 'binary'}
-                },
-                'required': []
-            }
-        },
+        request=CompanyUpdateSerializer,
         responses={
             status.HTTP_200_OK: CompanyDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
@@ -96,8 +77,6 @@ class CompanyDetailView(APIView):
         user = self.get_company(pk)
         serializer = CompanyDetailSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request, pk):
         company = self.get_company(pk)
@@ -155,5 +134,5 @@ class CompanyDetailViewByJWT(APIView):
         user = request.user
         employees = Employee.objects.filter(user_id=user.id)
         companies = Company.objects.filter(id__in=employees.values('company_id'))
-        serializer = CompanyListSerializer(companies,many=True)
+        serializer = CompanyListSerializer(companies, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
