@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.company_filter import CompanyFilter
 from pulse.models import Company, Employee
+from pulse.permissions import IsAssociatedWithCompany
 from pulse.serializers.company_serializer import CompanyDetailSerializer, CompanyListSerializer, CompanyUpdateSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 
@@ -65,7 +66,7 @@ class CompanyCreateView(APIView):
 )
 class CompanyDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAssociatedWithCompany]
 
     def get_company(self, pk):
         try:
@@ -90,32 +91,6 @@ class CompanyDetailView(APIView):
 @extend_schema(tags=["Company"])
 @extend_schema_view(
     get=extend_schema(
-        summary="Search companies",
-        responses={
-            status.HTTP_200_OK: CompanyListSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-        }
-    )
-)
-class CompanyListView(generics.ListAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    queryset = Company.objects.all()
-    serializer_class = CompanyListSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = CompanyFilter
-
-    def get_queryset(self):
-        users = Company.objects.all()
-        return users
-
-
-@extend_schema(tags=["Company"])
-@extend_schema_view(
-    get=extend_schema(
         summary="Get companies by jwt",
         responses={
             status.HTTP_200_OK: CompanyListSerializer,
@@ -133,6 +108,6 @@ class CompanyDetailViewByJWT(APIView):
     def get(self, request):
         user = request.user
         employees = Employee.objects.filter(user_id=user.id)
-        companies = Company.objects.filter(id__in=employees.values('company_id'))
+        companies = Company.objects.filter(id__in=employees.values('company_id')) | Company.objects.filter(creator=user)
         serializer = CompanyListSerializer(companies, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

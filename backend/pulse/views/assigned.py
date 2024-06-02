@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.assigned_filter import AssignedFilter
-from pulse.models import Assigned, Employee
+from pulse.models import Assigned, Employee, Task, ProjectManager
+from pulse.permissions import CanInteractAssigned
 from pulse.serializers.assigned_serializer import AssignedCreateSerializer, AssignedDetailSerializer, \
     AssignedUpdateSerializer, AssignedListSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
@@ -34,8 +35,27 @@ class AssignedCreateView(APIView):
     def post(self, request):
         assigned = AssignedCreateSerializer(data=request.data)
         assigned.is_valid(raise_exception=True)
-        assigned.save()
-        return Response(assigned.data, status=status.HTTP_201_CREATED)
+        task = assigned.validated_data["task"]
+        form_employee = assigned.validated_data["employee"]
+        try:
+            employee_in_company = Employee.objects.get(id=form_employee.id, company_id=task.project.company.id)
+            if employee_in_company:
+                employee = Employee.objects.get(user_id=request.user.id, company_id=task.project.company.id)
+                if form_employee.user.id == request.user.id:
+                    assigned.save()
+                    return Response(assigned.data, status=status.HTTP_201_CREATED)
+                if employee.is_project_manager:
+                    assigned.save()
+                    return Response(assigned.data, status=status.HTTP_201_CREATED)
+                user_pm = ProjectManager.objects.get(employee=employee)
+                if user_pm:
+                    assigned.save()
+                    return Response(assigned.data, status=status.HTTP_201_CREATED)
+            raise Http404("You are not allowed to perform this request")
+        except Employee.DoesNotExist:
+            raise Http404("Employee does not exist")
+        except (Task.DoesNotExist, ProjectManager.DoesNotExist):
+            raise Http404("You are not allowed to perform this request")
 
 
 @extend_schema(tags=["Assigned"])
@@ -74,7 +94,7 @@ class AssignedCreateView(APIView):
 )
 class AssignedDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanInteractAssigned]
 
     def get_assigned(self, pk):
         try:
@@ -99,32 +119,6 @@ class AssignedDetailView(APIView):
         assigned = self.get_assigned(pk)
         assigned.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@extend_schema(tags=["Assigned"])
-@extend_schema_view(
-    get=extend_schema(
-        summary="Search assigned",
-        responses={
-            status.HTTP_200_OK: AssignedListSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-        }
-    )
-)
-class AssignedListView(generics.ListAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    queryset = Assigned.objects.all()
-    serializer_class = AssignedListSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = AssignedFilter
-
-    def get_queryset(self):
-        assigned = Assigned.objects.all()
-        return assigned
 
 
 @extend_schema(tags=["Assigned"])

@@ -30,6 +30,7 @@ class Company(models.Model):
     name = models.CharField(max_length=100)
     unique_identifier = models.CharField(max_length=100, unique=True)
     website = models.URLField(max_length=200, null=True)
+    creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
 
 class Employee(models.Model):
@@ -72,7 +73,7 @@ class Task(models.Model):
 
 
 class Assigned(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, unique=True)
+    task = models.OneToOneField(Task, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
     rate_type = models.CharField(max_length=100, choices=RATE_TYPES, null=True)
     rate = models.FloatField(null=True)

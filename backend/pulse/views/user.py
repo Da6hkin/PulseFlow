@@ -10,6 +10,7 @@ from django.contrib.auth.hashers import make_password
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.user_filter import UserFilter
 from pulse.models import User
+from pulse.permissions import IsSameUser
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 from pulse.serializers.user_serializer import UserListSerializer, UserDetailSerializer, UserCreateSerializer, \
     UserUpdateSerializer
@@ -51,7 +52,7 @@ from pulse.serializers.user_serializer import UserListSerializer, UserDetailSeri
 )
 class UserDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsSameUser]
 
     def get_user(self, pk):
         try:
@@ -106,32 +107,6 @@ class UserCreateView(APIView):
             "disabled": saved_user.disabled
         }
         return Response(return_data, status=status.HTTP_201_CREATED)
-
-
-@extend_schema(tags=["Users"])
-@extend_schema_view(
-    get=extend_schema(
-        summary="Search users",
-        responses={
-            status.HTTP_200_OK: UserListSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-        }
-    )
-)
-class UserListView(generics.ListAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    queryset = User.objects.all()
-    serializer_class = UserListSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = UserFilter
-
-    def get_queryset(self):
-        users = User.objects.all()
-        return users
 
 
 @extend_schema(tags=["Users"])

@@ -7,12 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
+from pulse.exceptions import SimplePermissionDenied
 from pulse.filters.employee_filter import EmployeeFilter
-from pulse.models import Employee, User, Company
+from pulse.models import Employee, User, Company, Project
+from pulse.permissions import IsAssociatedWithEmployee
 from pulse.serializers.employee_serializer import EmployeeCreateSerializer, EmployeeDetailSerializer, \
     EmployeeUpdateSerializer, EmployeeListSerializer, AddEmployeeToCompanySerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
-
 
 
 @extend_schema(tags=["Employee"])
@@ -35,6 +36,16 @@ class EmployeeCreateView(APIView):
     def post(self, request):
         employee = EmployeeCreateSerializer(data=request.data)
         employee.is_valid(raise_exception=True)
+        user = employee.validated_data.get('user')
+        if request.user != user:
+            raise SimplePermissionDenied()
+        company = employee.validated_data.get("company")
+        try:
+            company = Company.objects.get(id=company.id)
+            if request.user != company.creator:
+                raise SimplePermissionDenied()
+        except Company.DoesNotExist:
+            raise Http404("Company does not exist")
         employee.save()
         return Response(employee.data, status=status.HTTP_201_CREATED)
 
@@ -75,7 +86,7 @@ class EmployeeCreateView(APIView):
 )
 class EmployeeDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAssociatedWithEmployee]
 
     def get_employee(self, pk):
         try:
@@ -101,32 +112,6 @@ class EmployeeDetailView(APIView):
         employee.disabled = True
         employee.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@extend_schema(tags=["Employee"])
-@extend_schema_view(
-    get=extend_schema(
-        summary="Search employees",
-        responses={
-            status.HTTP_200_OK: EmployeeListSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-        }
-    )
-)
-class EmployeeListView(generics.ListAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeListSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = EmployeeFilter
-
-    def get_queryset(self):
-        employees = Employee.objects.all()
-        return employees
 
 
 @extend_schema(tags=["Employee"])
@@ -165,6 +150,10 @@ class EmployeeDetailViewAddToCompany(APIView):
             if existing_employee:
                 raise Http404("Employee already exist in company")
         except Employee.DoesNotExist:
+            try:
+                Employee.objects.get(user_id=request.user.id, company_id=company.id)
+            except Employee.DoesNotExist:
+                raise Http404("You do not have permission to perform this action.")
             new_employee = Employee(user=user, company=company, is_project_manager=False, disabled=False)
             new_employee.save()
             saved_employee = EmployeeDetailSerializer(new_employee)

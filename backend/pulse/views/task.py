@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.task_filter import TaskFilter
-from pulse.models import Task
+from pulse.models import Task, Project, Employee, ProjectManager
+from pulse.permissions import CanInteractTask
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 from pulse.serializers.task_serializer import TaskCreateSerializer, TaskDetailSerializer, TaskUpdateSerializer, \
     TaskListSerializer
@@ -34,8 +35,25 @@ class TaskCreateView(APIView):
     def post(self, request):
         task = TaskCreateSerializer(data=request.data)
         task.is_valid(raise_exception=True)
-        task.save()
-        return Response(task.data, status=status.HTTP_201_CREATED)
+        try:
+            project = task.validated_data["project"]
+            if request.user == project.company.creator:
+                task.save()
+                return Response(task.data, status=status.HTTP_201_CREATED)
+            employee = Employee.objects.get(user_id=request.user.id, company=project.company)
+            if employee.is_project_manager:
+                task.save()
+                return Response(task.data, status=status.HTTP_201_CREATED)
+            user_pm = ProjectManager.objects.get(employee=employee)
+            if user_pm:
+                task.save()
+                return Response(task.data, status=status.HTTP_201_CREATED)
+            else:
+                raise Http404("You are not allowed to perform this request")
+        except Project.DoesNotExist:
+            raise Http404("Project does not exist")
+        except (Employee.DoesNotExist, ProjectManager.DoesNotExist):
+            raise Http404("You are not allowed to perform this request")
 
 
 @extend_schema(tags=["Task"])
@@ -74,7 +92,7 @@ class TaskCreateView(APIView):
 )
 class TaskDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanInteractTask]
 
     def get_task(self, pk):
         try:
@@ -123,5 +141,17 @@ class TaskListView(generics.ListAPIView):
     filterset_class = TaskFilter
 
     def get_queryset(self):
-        tasks = Task.objects.all()
-        return tasks
+        user = self.request.user
+        project = self.request.query_params.get('project', None)
+        if project:
+            try:
+                project = Project.objects.get(id=project)
+                Employee.objects.get(user_id=user.id, company=project.company)
+                tasks = Task.objects.all()
+                return tasks
+            except Project.DoesNotExist:
+                raise Http404("Project does not exist")
+            except Employee.DoesNotExist:
+                raise Http404("You do not have permission to perform this action.")
+        else:
+            raise Http404("You can't perform search without project parameter.")

@@ -21,8 +21,10 @@ class JWTAuthentication(authentication.BaseAuthentication):
                                  algorithms=[settings.JWT_CONF['ALGORITHM']])
         except jwt.exceptions.InvalidSignatureError:
             raise AuthenticationFailed('Invalid signature')
+        except jwt.exceptions.ExpiredSignatureError:
+            raise AuthenticationFailed('Token has expired')
         except:
-            raise ParseError()
+            raise ParseError("Error decoding jwt")
         user_email = payload.get('user_email')
         if user_email is None:
             raise AuthenticationFailed('User identifier not found in JWT')
@@ -44,6 +46,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         }
         jwt_token = jwt.encode(payload, settings.JWT_CONF['SECRET_KEY'], algorithm=settings.JWT_CONF['ALGORITHM'])
         return jwt_token
+
     @classmethod
     def get_the_token_from_header(cls, token):
         token = token.replace('Bearer', '').replace(' ', '')

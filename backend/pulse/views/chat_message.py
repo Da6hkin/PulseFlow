@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.chat_message_filter import ChatMessageFilter
-from pulse.models import ChatMessage
+from pulse.models import ChatMessage, Employee, Project
 from pulse.serializers.chat_message_serializer import ChatMessageCreateSerializer, ChatMessageDetailSerializer, \
     ChatMessageUpdateSerializer, ChatMessageListSerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
@@ -34,71 +34,19 @@ class ChatMessageCreateView(APIView):
     def post(self, request):
         chat_message = ChatMessageCreateSerializer(data=request.data)
         chat_message.is_valid(raise_exception=True)
-        chat_message.save()
-        return Response(chat_message.data, status=status.HTTP_201_CREATED)
-
-
-@extend_schema(tags=["Chat Message"])
-@extend_schema_view(
-    get=extend_schema(
-        summary="Detailed info about chat message",
-        responses={
-            status.HTTP_200_OK: ChatMessageDetailSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
-        }
-    ),
-    put=extend_schema(
-        summary="Update chat message",
-        request=ChatMessageUpdateSerializer,
-        responses={
-            status.HTTP_200_OK: ChatMessageDetailSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
-        }
-    ),
-    delete=extend_schema(
-        summary="Delete chat message",
-        responses={
-            status.HTTP_200_OK: DummyDetailSerializer,
-            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
-            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
-            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
-            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
-        }
-    )
-)
-class ChatMessageDetailView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get_chat_message(self, pk):
+        project = chat_message.validated_data["project"]
+        user = chat_message.validated_data["user"]
+        if user != request.user:
+            raise Http404("You are not allowed to perform this request")
         try:
-            return ChatMessage.objects.get(pk=pk)
-        except ChatMessage.DoesNotExist:
-            raise Http404("Chat message does not exist")
-
-    def get(self, request, pk):
-        chat_message = self.get_chat_message(pk)
-        serializer = ChatMessageDetailSerializer(chat_message)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request, pk):
-        chat_message = self.get_chat_message(pk)
-        serializer = ChatMessageUpdateSerializer(chat_message, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        updated_chat_message = ChatMessageDetailSerializer(chat_message)
-        return Response(updated_chat_message.data, status=status.HTTP_200_OK)
-
-    def delete(self, request, pk):
-        chat_message = self.get_chat_message(pk)
-        chat_message.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            employee = Employee.objects.get(user_id=user.id, company_id=project.company.id)
+            if employee:
+                chat_message.save()
+                return Response(chat_message.data, status=status.HTTP_201_CREATED)
+        except Project.DoesNotExist:
+            raise Http404("Project does not exist")
+        except Employee.DoesNotExist:
+            raise Http404("You are not allowed to perform this request")
 
 
 @extend_schema(tags=["Chat Message"])
@@ -123,5 +71,17 @@ class ChatMessageListView(generics.ListAPIView):
     filterset_class = ChatMessageFilter
 
     def get_queryset(self):
-        chat_messages = ChatMessage.objects.all()
-        return chat_messages
+        user = self.request.user
+        project_id = self.request.query_params.get('project', None)
+        if project_id:
+            try:
+                project = Project.objects.get(id=project_id)
+                Employee.objects.get(user_id=user.id, company=project.company)
+                chat_messages = ChatMessage.objects.all()
+                return chat_messages
+            except Project.DoesNotExist:
+                raise Http404("Project does not exist")
+            except Employee.DoesNotExist:
+                raise Http404("You do not have permission to perform this action.")
+        else:
+            raise Http404("You can't perform search without company parameter.")
