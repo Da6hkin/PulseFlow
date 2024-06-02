@@ -57,7 +57,7 @@ class CanInteractProject(BasePermission):
         try:
             project = Project.objects.get(pk=view.kwargs['pk'])
             employee = Employee.objects.get(user_id=request.user.id, company=project.company)
-            if employee.is_project_manager:
+            if employee.is_admin:
                 return True
             project_manager = ProjectManager.objects.get(project=project, employee=employee)
             if project_manager:
@@ -79,7 +79,7 @@ class CanInteractProjectManager(BasePermission):
             employee = Employee.objects.get(user_id=request.user.id, company=pm.project.company)
             if request.user == pm.project.company.creator:
                 return True
-            if employee.is_project_manager:
+            if employee.is_admin:
                 return True
             project_manager = ProjectManager.objects.get(project=pm.project, employee=employee)
             if project_manager:
@@ -117,7 +117,7 @@ class CanInteractAssigned(BasePermission):
             if assigned.employee.user.id == request.user.id:
                 return True
             employee = Employee.objects.get(user_id=request.user.id, company_id=assigned.employee.company.id)
-            if employee.is_project_manager:
+            if employee.is_admin:
                 return True
             project_manager = ProjectManager.objects.get(project=assigned.task.project, employee=employee)
             if project_manager:

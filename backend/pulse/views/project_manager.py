@@ -42,7 +42,7 @@ class ProjectManagerCreateView(APIView):
                 project_manager.save()
                 return Response(project_manager.data, status=status.HTTP_201_CREATED)
             employee = Employee.objects.get(user_id=request.user.id, company=existing_project.company)
-            if employee.is_project_manager:
+            if employee.is_admin:
                 project_manager.save()
                 return Response(project_manager.data, status=status.HTTP_201_CREATED)
             user_pm = ProjectManager.objects.get(employee=employee)

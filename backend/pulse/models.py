@@ -36,7 +36,7 @@ class Company(models.Model):
 class Employee(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     company = models.ForeignKey(Company, on_delete=models.DO_NOTHING)
-    is_project_manager = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
     disabled = models.BooleanField(default=False)
 
     class Meta:
