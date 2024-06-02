@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 
 from pulse.auth.authentication import JWTAuthentication
 from pulse.filters.project_manager_filter import ProjectManagerFilter
-from pulse.models import ProjectManager
+from pulse.models import ProjectManager, Employee, Project
+from pulse.permissions import CanInteractProjectManager
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 from pulse.serializers.project_manager_serializer import ProjectManagerCreateSerializer, ProjectManagerDetailSerializer, \
     ProjectManagerListSerializer
@@ -34,8 +35,25 @@ class ProjectManagerCreateView(APIView):
     def post(self, request):
         project_manager = ProjectManagerCreateSerializer(data=request.data)
         project_manager.is_valid(raise_exception=True)
-        project_manager.save()
-        return Response(project_manager.data, status=status.HTTP_201_CREATED)
+        try:
+            project = project_manager.validated_data["project"]
+            existing_project = Project.objects.get(id=project.id)
+            if project.company.creator == request.user:
+                project_manager.save()
+                return Response(project_manager.data, status=status.HTTP_201_CREATED)
+            employee = Employee.objects.get(user_id=request.user.id, company=existing_project.company)
+            if employee.is_project_manager:
+                project_manager.save()
+                return Response(project_manager.data, status=status.HTTP_201_CREATED)
+            user_pm = ProjectManager.objects.get(employee=employee)
+            if user_pm:
+                project_manager.save()
+                return Response(project_manager.data, status=status.HTTP_201_CREATED)
+            raise Http404("You are not allowed to perform this request")
+        except Project.DoesNotExist:
+            raise Http404("Project does not exist")
+        except (Employee.DoesNotExist, ProjectManager.DoesNotExist):
+            raise Http404("You are not allowed to perform this request")
 
 
 @extend_schema(tags=["Project Manager"])
@@ -63,7 +81,7 @@ class ProjectManagerCreateView(APIView):
 )
 class ProjectManagerDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanInteractProjectManager]
 
     def get_project_manager(self, pk):
         try:
@@ -105,8 +123,16 @@ class ProjectManagerListView(generics.ListAPIView):
     filterset_class = ProjectManagerFilter
 
     def get_queryset(self):
-        projects = ProjectManager.objects.all()
-        return projects
-
-
-
+        user = self.request.user
+        company = self.request.query_params.get('company', None)
+        if company:
+            try:
+                Employee.objects.get(user_id=user.id, company_id=company)
+                projects = Project.objects.all()
+                return projects
+            except Employee.DoesNotExist:
+                raise Http404("You do not have permission to perform this action.")
+        else:
+            raise Http404("You can't perform search without company parameter.")
+        project_managers = ProjectManager.objects.all()
+        return project_managers
