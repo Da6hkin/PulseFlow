@@ -7,19 +7,19 @@ from pulse.serializers.user_serializer import UserDetailSerializer
 
 class EmployeeCreateSerializer(serializers.ModelSerializer):
     disabled = serializers.BooleanField(required=False, default=False)
-    is_project_manager = serializers.BooleanField(required=True)
+    is_admin = serializers.BooleanField(required=True)
 
     class Meta:
         model = Employee
-        fields = ("user", "company", "is_project_manager", "disabled")
+        fields = ("user", "company", "is_admin", "disabled")
 
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):
-    is_project_manager = serializers.BooleanField(required=False)
+    is_admin = serializers.BooleanField(required=False)
 
     class Meta:
         model = Employee
-        fields = ("is_project_manager",)
+        fields = ("is_admin",)
 
 
 class EmployeeListSerializer(serializers.ModelSerializer):

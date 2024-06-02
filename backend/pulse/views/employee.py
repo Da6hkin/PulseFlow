@@ -154,7 +154,7 @@ class EmployeeDetailViewAddToCompany(APIView):
                 Employee.objects.get(user_id=request.user.id, company_id=company.id)
             except Employee.DoesNotExist:
                 raise Http404("You do not have permission to perform this action.")
-            new_employee = Employee(user=user, company=company, is_project_manager=False, disabled=False)
+            new_employee = Employee(user=user, company=company, is_admin=False, disabled=False)
             new_employee.save()
             saved_employee = EmployeeDetailSerializer(new_employee)
             return Response(saved_employee.data, status=status.HTTP_200_OK)

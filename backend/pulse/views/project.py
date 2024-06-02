@@ -32,18 +32,27 @@ class ProjectCreateView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def check_for_pm(self, employee, project):
+        try:
+            ProjectManager.objects.get(employee=employee, project=project)
+        except ProjectManager.DoesNotExist:
+            pm = ProjectManager(employee=employee, project=project, disabled=False)
+            pm.save()
+
     def post(self, request):
         project = ProjectCreateSerializer(data=request.data)
         project.is_valid(raise_exception=True)
         company = project.validated_data["company"]
         try:
             employee = Employee.objects.get(user_id=request.user.id, company=company)
-            if employee.is_project_manager:
-                project.save()
+            if employee.is_admin:
+                saved_project = project.save()
+                self.check_for_pm(employee, saved_project)
                 return Response(project.data, status=status.HTTP_201_CREATED)
             pm = ProjectManager.objects.get(employee=employee)
             if pm:
-                project.save()
+                saved_project = project.save()
+                self.check_for_pm(employee, saved_project)
                 return Response(project.data, status=status.HTTP_201_CREATED)
             else:
                 raise Http404("You are not allowed to perform this request")
@@ -229,7 +238,7 @@ class ProjectDetailViewFinance(APIView):
         if project_manager is None and employee is None and project.company.creator != request.user:
             raise Http404("You do not have permission to perform this action.")
         else:
-            if employee and employee.is_project_manager == False:
+            if employee and employee.is_admin == False:
                 raise Http404("You do not have permission to perform this action.")
             else:
                 tasks = Task.objects.filter(project_id=project.id, state='done')

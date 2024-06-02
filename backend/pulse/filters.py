@@ -6,4 +6,4 @@ from pulse.models import User
 class UserFilter(filters.FilterSet):
     class Meta:
         model = User
-        fields = ['name', 'surname', 'email', 'is_project_manager']
+        fields = ['name', 'surname', 'email', 'is_admin']

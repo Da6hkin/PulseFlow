@@ -44,7 +44,7 @@ class AssignedCreateView(APIView):
                 if form_employee.user.id == request.user.id:
                     assigned.save()
                     return Response(assigned.data, status=status.HTTP_201_CREATED)
-                if employee.is_project_manager:
+                if employee.is_admin:
                     assigned.save()
                     return Response(assigned.data, status=status.HTTP_201_CREATED)
                 user_pm = ProjectManager.objects.get(employee=employee)

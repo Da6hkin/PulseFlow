@@ -41,7 +41,7 @@ class TaskCreateView(APIView):
                 task.save()
                 return Response(task.data, status=status.HTTP_201_CREATED)
             employee = Employee.objects.get(user_id=request.user.id, company=project.company)
-            if employee.is_project_manager:
+            if employee.is_admin:
                 task.save()
                 return Response(task.data, status=status.HTTP_201_CREATED)
             user_pm = ProjectManager.objects.get(employee=employee)
