@@ -36,6 +36,9 @@ class CompanyCreateView(APIView):
     def post(self, request):
         company = CompanyDetailSerializer(data=request.data)
         company.is_valid(raise_exception=True)
+        creator = company.validated_data.get('creator')
+        if creator != request.user:
+            raise Http404("You do not have permission to perform this action.")
         company.save()
         return Response(company.data, status=status.HTTP_201_CREATED)
 
