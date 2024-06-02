@@ -29,7 +29,7 @@ class User(AbstractUser):
 class Company(models.Model):
     name = models.CharField(max_length=100)
     unique_identifier = models.CharField(max_length=100, unique=True)
-    website = models.URLField(max_length=200, null=True)
+    website = models.URLField(max_length=200, null=True, blank=True)
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
 
