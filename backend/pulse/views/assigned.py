@@ -138,20 +138,31 @@ class AssignedDetailViewByJWT(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get_assigned(self, pk):
+    def get_task(self, pk):
         try:
-            return Assigned.objects.get(pk=pk)
-        except Assigned.DoesNotExist:
+            return Task.objects.get(pk=pk)
+        except Task.DoesNotExist:
             raise Http404("Assigned does not exist")
 
     def get(self, request, pk):
-        assigned = self.get_assigned(pk)
+        task = self.get_task(pk)
         user_id = request.user.id
         try:
-            employee = Employee.objects.get(user_id=user_id, company_id=assigned.task.project.company.id)
+            employee = Employee.objects.get(user_id=user_id, company_id=task.project.company.id)
         except Employee.DoesNotExist:
             raise Http404("User is not employee in this company")
-        if assigned.employee == employee:
+        if employee.is_admin:
             return Response(True, status=status.HTTP_200_OK)
-        else:
-            return Response(False, status=status.HTTP_200_OK)
+        try:
+            pm = ProjectManager.objects.get(employee=employee,project=task.project)
+            if pm:
+                return Response(True, status=status.HTTP_200_OK)
+        except ProjectManager.DoesNotExist:
+            pass
+        try:
+            assigned = Assigned.objects.get(employee=employee, task=task)
+            if assigned:
+                return Response(True, status=status.HTTP_200_OK)
+        except Assigned.DoesNotExist:
+            raise Http404("Assigned not found with given parameters")
+        return Response(False, status=status.HTTP_200_OK)
