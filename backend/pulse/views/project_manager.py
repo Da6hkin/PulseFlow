@@ -124,15 +124,16 @@ class ProjectManagerListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        company = self.request.query_params.get('company', None)
-        if company:
+        project_id = self.request.query_params.get('project', None)
+        if project_id:
             try:
-                Employee.objects.get(user_id=user.id, company_id=company)
-                projects = Project.objects.all()
-                return projects
+                project = Project.objects.get(project_id=project_id)
+                Employee.objects.get(user_id=user.id, company_id=project.company)
+                pms = ProjectManager.objects.all()
+                return pms
+            except Project.DoesNotExist:
+                raise Http404("Project does not exist")
             except Employee.DoesNotExist:
                 raise Http404("You do not have permission to perform this action.")
         else:
             raise Http404("You can't perform search without company parameter.")
-        project_managers = ProjectManager.objects.all()
-        return project_managers

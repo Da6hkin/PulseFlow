@@ -158,3 +158,38 @@ class EmployeeDetailViewAddToCompany(APIView):
             new_employee.save()
             saved_employee = EmployeeDetailSerializer(new_employee)
             return Response(saved_employee.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Employee"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Search employees",
+        responses={
+            status.HTTP_200_OK: EmployeeListSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+        }
+    )
+)
+class EmployeeListView(generics.ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeListSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = EmployeeFilter
+
+    def get_queryset(self):
+        user = self.request.user
+        company = self.request.query_params.get('company', None)
+        if company:
+            try:
+                Employee.objects.get(user_id=user.id, company_id=company)
+                employees = Employee.objects.all()
+                return employees
+            except Employee.DoesNotExist:
+                raise Http404("You do not have permission to perform this action.")
+        else:
+            raise Http404("You can't perform search without company parameter.")
