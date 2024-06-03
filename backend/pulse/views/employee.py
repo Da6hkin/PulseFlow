@@ -10,9 +10,9 @@ from pulse.auth.authentication import JWTAuthentication
 from pulse.exceptions import SimplePermissionDenied
 from pulse.filters.employee_filter import EmployeeFilter
 from pulse.models import Employee, User, Company, Project
-from pulse.permissions import IsAssociatedWithEmployee
+from pulse.permissions import IsAssociatedWithEmployee, IsAssociatedWithCompany
 from pulse.serializers.employee_serializer import EmployeeCreateSerializer, EmployeeDetailSerializer, \
-    EmployeeUpdateSerializer, EmployeeListSerializer, AddEmployeeToCompanySerializer
+    EmployeeUpdateSerializer, EmployeeListSerializer, AddEmployeeToCompanySerializer, EmployeeByCompanySerializer
 from pulse.serializers.error_serializer import DummyDetailSerializer, DummyDetailAndStatusSerializer
 
 
@@ -193,3 +193,34 @@ class EmployeeListView(generics.ListAPIView):
                 raise Http404("You do not have permission to perform this action.")
         else:
             raise Http404("You can't perform search without company parameter.")
+
+
+@extend_schema(tags=["Employee"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Get employees within company",
+        responses={
+            status.HTTP_200_OK: EmployeeByCompanySerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    )
+)
+class EmployeeListViewByCompany(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAssociatedWithCompany]
+
+    def get_company(self, pk):
+        try:
+            return Company.objects.get(pk=pk)
+        except Company.DoesNotExist:
+            raise Http404("Company does not exist")
+
+    def get(self, request, pk):
+        company = self.get_company(pk)
+        employees = Employee.objects.filter(company=company)
+        serializer = EmployeeByCompanySerializer(employees, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
