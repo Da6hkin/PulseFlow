@@ -37,24 +37,15 @@ class AssignedCreateView(APIView):
         assigned.is_valid(raise_exception=True)
         task = assigned.validated_data["task"]
         form_employee = assigned.validated_data["employee"]
+        if form_employee.user != request.user:
+            raise Http404("You are not allowed to perform this request")
         try:
-            employee_in_company = Employee.objects.get(id=form_employee.id, company_id=task.project.company.id)
-            if employee_in_company:
-                employee = Employee.objects.get(user_id=request.user.id, company_id=task.project.company.id)
-                if form_employee.user.id == request.user.id:
-                    assigned.save()
-                    return Response(assigned.data, status=status.HTTP_201_CREATED)
-                if employee.is_admin:
-                    assigned.save()
-                    return Response(assigned.data, status=status.HTTP_201_CREATED)
-                user_pm = ProjectManager.objects.get(employee=employee)
-                if user_pm:
-                    assigned.save()
-                    return Response(assigned.data, status=status.HTTP_201_CREATED)
+            employee = Employee.objects.get(id=form_employee.id, company_id=task.project.company.id)
+            if employee:
+                assigned.save()
+                return Response(assigned.data, status=status.HTTP_201_CREATED)
             raise Http404("You are not allowed to perform this request")
         except Employee.DoesNotExist:
-            raise Http404("Employee does not exist")
-        except (Task.DoesNotExist, ProjectManager.DoesNotExist):
             raise Http404("You are not allowed to perform this request")
 
 
@@ -142,7 +133,7 @@ class AssignedDetailViewByJWT(APIView):
         try:
             return Task.objects.get(pk=pk)
         except Task.DoesNotExist:
-            raise Http404("Assigned does not exist")
+            raise Http404("Task does not exist")
 
     def get(self, request, pk):
         task = self.get_task(pk)
@@ -154,7 +145,7 @@ class AssignedDetailViewByJWT(APIView):
         if employee.is_admin:
             return Response(True, status=status.HTTP_200_OK)
         try:
-            pm = ProjectManager.objects.get(employee=employee,project=task.project)
+            pm = ProjectManager.objects.get(employee=employee, project=task.project)
             if pm:
                 return Response(True, status=status.HTTP_200_OK)
         except ProjectManager.DoesNotExist:

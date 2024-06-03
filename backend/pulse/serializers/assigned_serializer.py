@@ -38,3 +38,9 @@ class AssignedDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assigned
         fields = "__all__"
+
+
+class AssignedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assigned
+        fields = "__all__"

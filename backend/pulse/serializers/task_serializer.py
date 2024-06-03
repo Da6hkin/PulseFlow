@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from pulse.models import Task, STATE
+from pulse.models import Task, STATE, Assigned
 from pulse.serializers.project_serializer import ProjectDetailSerializer
 
 
@@ -28,12 +28,24 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
             "name", "state", "priority", "description", "planned_start_date", "planned_end_date", "hours_spent",)
 
 
+class AssignedForTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assigned
+        fields = "__all__"
+
+
 class TaskListSerializer(serializers.ModelSerializer):
     project = ProjectDetailSerializer(read_only=True)
+    assigned = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
-        fields = "__all__"
+        fields = (
+        "id", "name", "project", "priority", "description", "planned_start_date", "planned_end_date", "assigned")
+
+    def get_assigned(self, obj):
+        assigned = Assigned.objects.filter(task=obj)
+        return AssignedForTaskSerializer(assigned, many=True).data
 
 
 class TaskDetailSerializer(serializers.ModelSerializer):
