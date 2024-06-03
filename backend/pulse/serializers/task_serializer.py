@@ -41,7 +41,8 @@ class TaskListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = (
-        "id", "name", "project", "priority", "description", "planned_start_date", "planned_end_date", "assigned")
+            "id", "name", "project", "state", "priority", "description", "planned_start_date", "planned_end_date",
+            "hours_spent", "assigned")
 
     def get_assigned(self, obj):
         assigned = Assigned.objects.filter(task=obj)
