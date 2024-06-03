@@ -46,7 +46,7 @@ class Employee(models.Model):
 class Project(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    description = models.CharField(max_length=5000, null=True)
+    description = models.CharField(max_length=5000, null=True, blank=True)
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True)
     income = models.FloatField()
@@ -66,7 +66,7 @@ class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     state = models.CharField(max_length=100, choices=STATE)
     priority = models.IntegerField()
-    description = models.CharField(max_length=1000, null=True)
+    description = models.CharField(max_length=1000, null=True, blank=True)
     planned_start_date = models.DateTimeField()
     planned_end_date = models.DateTimeField()
     hours_spent = models.IntegerField(default=0)
