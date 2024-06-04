@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from pulse.auth.authentication import JWTAuthentication
 from pulse.exceptions import SimplePermissionDenied
 from pulse.filters.employee_filter import EmployeeFilter
-from pulse.models import Employee, User, Company, Project
+from pulse.models import Employee, User, Company, Project, Task
 from pulse.permissions import IsAssociatedWithEmployee, IsAssociatedWithCompany
 from pulse.serializers.employee_serializer import EmployeeCreateSerializer, EmployeeDetailSerializer, \
     EmployeeUpdateSerializer, EmployeeListSerializer, AddEmployeeToCompanySerializer, EmployeeByCompanySerializer
@@ -224,3 +224,35 @@ class EmployeeListViewByCompany(APIView):
         serializer = EmployeeByCompanySerializer(employees, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+@extend_schema(tags=["Employee"])
+@extend_schema_view(
+    get=extend_schema(
+        summary="Detailed info about employee by task",
+        responses={
+            status.HTTP_200_OK: EmployeeDetailSerializer,
+            status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
+            status.HTTP_401_UNAUTHORIZED: DummyDetailSerializer,
+            status.HTTP_403_FORBIDDEN: DummyDetailAndStatusSerializer,
+            status.HTTP_404_NOT_FOUND: DummyDetailSerializer
+        }
+    ),
+)
+class EmployeeDetailViewByJWTTask(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_task(self, pk):
+        try:
+            return Task.objects.get(pk=pk)
+        except Task.DoesNotExist:
+            raise Http404("Task does not exist")
+
+    def get(self, request, task_id):
+        task = self.get_task(task_id)
+        try:
+            employee = Employee.objects.get(user_id=request.user.id, company=task.project.company)
+            serializer = EmployeeDetailSerializer(employee)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Employee.DoesNotExist:
+            raise Http404("You are not part of company")
