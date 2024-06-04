@@ -126,7 +126,7 @@ class ProjectManagerListView(generics.ListAPIView):
 @extend_schema(tags=["Project Manager"])
 @extend_schema_view(
     delete=extend_schema(
-        summary="Disable project manager",
+        summary="Delete project manager",
         responses={
             status.HTTP_200_OK: DummyDetailSerializer,
             status.HTTP_400_BAD_REQUEST: DummyDetailSerializer,
