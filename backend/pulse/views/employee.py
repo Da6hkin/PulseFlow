@@ -251,7 +251,7 @@ class EmployeeDetailViewByJWTTask(APIView):
     def get(self, request, task_id):
         task = self.get_task(task_id)
         try:
-            employee = Employee.objects.get(user_id=request.user.id, company=task.project.company)
+            employee = Employee.objects.get(user=request.user, company=task.project.company)
             serializer = EmployeeDetailSerializer(employee)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Employee.DoesNotExist:

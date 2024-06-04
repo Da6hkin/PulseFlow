@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from pulse.models import Task, STATE, Assigned
+from pulse.serializers.employee_serializer import EmployeeDetailSerializer
 from pulse.serializers.project_serializer import ProjectDetailSerializer
 
 
@@ -29,6 +30,8 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
 
 
 class AssignedForTaskSerializer(serializers.ModelSerializer):
+    employee = EmployeeDetailSerializer(read_only=True)
+
     class Meta:
         model = Assigned
         fields = "__all__"
