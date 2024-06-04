@@ -89,13 +89,27 @@ class ProjectManagerDetailView(APIView):
         except ProjectManager.DoesNotExist:
             raise Http404("ProjectManager does not exist")
 
+    def get_employee(self, pk):
+        try:
+            return Employee.objects.get(pk=pk)
+        except Employee.DoesNotExist:
+            raise Http404("Employee does not exist")
+
     def get(self, request, pk):
         project_manager = self.get_project_manager(pk)
         serializer = ProjectManagerDetailSerializer(project_manager)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        project_manager = self.get_project_manager(pk)
+        employee = self.get_employee(pk)
+        try:
+            Employee.objects.get(user_id=request.user.id, company=employee.company, is_admin=True)
+        except Employee.DoesNotExist:
+            raise Http404("You are not allowed to perform this request")
+        try:
+            project_manager = ProjectManager.objects.get(employee=employee)
+        except ProjectManager.DoesNotExist:
+            raise Http404("Given employee is not a project manager")
         project_manager.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
