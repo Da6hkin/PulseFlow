@@ -96,8 +96,7 @@ class ProjectManagerDetailView(APIView):
 
     def delete(self, request, pk):
         project_manager = self.get_project_manager(pk)
-        project_manager.disabled = True
-        project_manager.save()
+        project_manager.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
