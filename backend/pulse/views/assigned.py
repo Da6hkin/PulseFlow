@@ -155,5 +155,5 @@ class AssignedDetailViewByJWT(APIView):
             if assigned:
                 return Response(True, status=status.HTTP_200_OK)
         except Assigned.DoesNotExist:
-            raise Http404("Assigned not found with given parameters")
+            return Response(False, status=status.HTTP_200_OK)
         return Response(False, status=status.HTTP_200_OK)
