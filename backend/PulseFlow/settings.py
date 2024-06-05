@@ -29,7 +29,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
 
-ALLOWED_HOSTS = ["37.27.30.55", "localhost", "www.pulseflow.xyz", "pulseflow.xyz", '127.0.0.1']
+ALLOWED_HOSTS = ["37.27.30.55", "localhost", "www.pulseflow.xyz", "pulseflow.xyz", '127.0.0.1', '0.0.0.0']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -107,8 +107,8 @@ DATABASES = {
         'NAME': 'pulse_flow',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5439',
+        'HOST': 'pgdb',
+        'PORT': '5432',
         'ATOMIC_REQUESTS': True,
     }
 }
