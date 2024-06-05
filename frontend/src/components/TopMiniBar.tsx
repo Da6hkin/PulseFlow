@@ -4,14 +4,23 @@ import { ReactComponent as Logo } from '../assets/logo-pulse-flow.svg'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Time from './Time'
 import LeftBarItem from './items/LeftBarItem'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectCurrentCompany } from 'src/store/company'
+import { useProjectIsPmQuery } from 'src/store/project'
+import { setOpenModal } from 'src/store/task'
 
 const items = ['ЗАВДАННЯ', 'МОЯ КОМАНДА']
 
 const TopMiniBar = () => {
   const theme = useTheme()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const location = useLocation()
   const projectId = location.pathname.split('/')[2]
+  const isTaskLocation = location.pathname.includes('task')
+  const currentCompany = useSelector(selectCurrentCompany)
+  const { data: isProjectManager } = useProjectIsPmQuery(projectId)
+
   const routerList = [
     `/task/${projectId}`,
     `/team/${projectId}`
@@ -21,8 +30,8 @@ const TopMiniBar = () => {
     navigate('/')
   }
 
-  const handleOpenPopap = () => {
-    console.log('open')
+  const handleOpenModal = () => {
+    dispatch(setOpenModal(true))
   }
 
   return (
@@ -61,7 +70,7 @@ const TopMiniBar = () => {
             lineHeight: '30px',
             color: theme.palette.primary.dark
           }}
-        >{'Моя Команда'}</Box>
+        >{currentCompany?.name}</Box>
         <Box
           sx={{
             display: 'flex',
@@ -82,13 +91,13 @@ const TopMiniBar = () => {
       <Box
         display={'flex'}
         alignItems={'center'}
-        gap={'45px'}
       >
-        <Button
-          onClick={handleOpenPopap}
+        {isTaskLocation && isProjectManager && <Button
+          onClick={handleOpenModal}
           sx={{
             width: '100px',
             height: '40px',
+            marginRight: '40px',
             borderRadius: '12px',
             backgroundColor: theme.palette.primary.main,
             '&:hover': {
@@ -101,7 +110,7 @@ const TopMiniBar = () => {
               color: theme.palette.text.primary
             }}
           >+ Додати</Typography>
-        </Button>
+        </Button>}
         <Time />
       </Box>
     </Box>

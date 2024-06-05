@@ -1,31 +1,34 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import WrapperPage from 'src/components/WrapperPage'
 import { CompanyItem } from 'src/components/items/CompanyItem'
 import CustomizedModal from 'src/components/CustomizedModal'
 import CustomizedInput from 'src/components/CustomizedInput'
-import { setCurrentCompany, useCreateCompanyMutation, useGetMeQuery, useSearchCompanyQuery } from 'src/store/company'
-import { useDispatch, useSelector } from 'react-redux'
-import { selectCurrentUserState } from 'src/store/users'
+import StarIcon from '@mui/icons-material/Star'
+import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ICompany, selectCurrentCompany, setCurrentCompany,
+  useCreateCompanyMutation,
+  useGetMeCompanyQuery
+} from 'src/store/company'
+import { useSelector, useDispatch } from 'react-redux'
+import { useGetMeQuery } from 'src/store/users'
 import { useCreateEmployeeMutation } from 'src/store/employee'
 
 const CompanyPage: React.FC = () => {
   const dispatch = useDispatch()
-  const { data } = useGetMeQuery()
   const [createCompany] = useCreateCompanyMutation()
   const [createEmployee] = useCreateEmployeeMutation()
-  const currentUser = useSelector(selectCurrentUserState)
-  const companies = useSearchCompanyQuery({ id: currentUser?.id })
-  console.log(currentUser, companies)
+  const { data: user } = useGetMeQuery()
+  const { data: companyData, isLoading: isLoadingCompany } = useGetMeCompanyQuery()
+  const getCompanies = useGetMeCompanyQuery().refetch
+  const currentCompany = useSelector(selectCurrentCompany)
 
   const [openModal, setOpenModal] = React.useState(false)
   const [nameCompany, setNameCompany] = React.useState('')
   const [idCompany, setIdCompany] = React.useState('')
   const [webCompany, setWebCompany] = React.useState('')
-
-  useEffect(() => {
-    data && dispatch(setCurrentCompany(data))
-  }, [data])
+  const [error, setError] = React.useState('')
 
   const handleOpenModal = () => {
     setOpenModal(true)
@@ -33,23 +36,33 @@ const CompanyPage: React.FC = () => {
 
   const handleCloseModal = () => {
     setOpenModal(false)
+    setError('')
   }
 
   const handleCreateCompany = async () => {
-    const formData = new FormData()
-    formData.append('name', nameCompany)
-    formData.append('unique_identifier', idCompany)
-    formData.append('website', webCompany)
-    await createCompany(formData).then(async (res: any) => {
-      const data: any = {
-        user: currentUser?.id,
-        company: res?.id,
-        is_project_manager: true,
-        disabled: false
+    const data = {
+      name: nameCompany,
+      unique_identifier: idCompany,
+      website: webCompany,
+      creator: user?.id
+    }
+    await createCompany(data).then(async (res: any) => {
+      if (res?.error) {
+        setError('Помилка при створенні компанії')
+      } else {
+        const data: any = {
+          user: user?.id,
+          company: res?.data?.id,
+          is_admin: true,
+          disabled: false
+        }
+        setError('')
+        await getCompanies()
+        await createEmployee(data).then(() => {
+          handleCloseModal()
+        })
       }
-      await createEmployee(data)
     })
-    handleCloseModal()
   }
 
   const handleChangeCompany = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +75,10 @@ const CompanyPage: React.FC = () => {
 
   const handleChangeWebCompany = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWebCompany(e.target.value)
+  }
+
+  const handleCurrentCompany = (company: ICompany) => {
+    dispatch(setCurrentCompany(company))
   }
 
   return (
@@ -93,8 +110,22 @@ const CompanyPage: React.FC = () => {
             alignItems={'start'}
             gap={'15px'}
           >
-            <CompanyItem title={'Company 1'} />
-            <CompanyItem title={'Company 2'} />
+            {!isLoadingCompany && companyData &&
+              companyData?.length > 0 && companyData.map((company) => (
+              <Box
+                key={company?.id}
+                display={'flex'}
+                alignItems={'center'}
+                gap={'15px'}
+                onClick={() => handleCurrentCompany(company)}
+              >
+                <CompanyItem
+                  title={company?.name}
+                  subTitle={company?.unique_identifier}
+                  info={company?.website ?? ''} />
+                {(currentCompany?.id === company?.id) && <StarIcon style={{ width: '40px', height: '40px' }} />}
+              </Box>
+            ))}
             <Button variant='contained' color='primary' sx={{
               width: '100%',
               marginTop: '20px'
@@ -136,6 +167,13 @@ const CompanyPage: React.FC = () => {
             onChange={handleChangeWebCompany}
             type='text'
             placeholder='Вебсайт' />
+
+          {error && <Box sx={{
+            color: 'red',
+            fontSize: '14px'
+          }}>
+            {error}
+          </Box>}
         </Box>
       </CustomizedModal>}
     </>

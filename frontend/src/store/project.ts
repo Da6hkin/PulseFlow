@@ -9,13 +9,13 @@ interface RequestProject {
   company: number
   name: string
   description: string
-  start_date: string
-  end_date: string
-  income: number
+  start_date?: Date
+  end_date?: Date
+  income?: number
 }
 
 export interface IProject {
-  id?: number
+  id: number
   company: {
     id: number
     name: string
@@ -38,12 +38,12 @@ interface UpdateProject {
 }
 
 interface SearchProjectRequest {
-  company?: string
+  company?: number
   end_date?: string
-  id?: string
-  income?: string
+  id?: number
+  income?: number
   name?: string
-  order_by?: '-id' | 'id' | '-name' | 'name' |'-start_date' | 'start_date' |'-end_date' | 'end_date' |'-income' | 'income'
+  order_by?: '-id' | 'id' | '-name' | 'name' | '-start_date' | 'start_date' | '-end_date' | 'end_date' | '-income' | 'income'
 }
 
 export const ProjectApi = createApi({
@@ -60,7 +60,7 @@ export const ProjectApi = createApi({
   }),
   tagTypes: ['Project'],
   endpoints: (builder) => ({
-    createProject: builder.mutation<RequestProject, IProject>({
+    createProject: builder.mutation<IProject, RequestProject>({
       query: (project) => ({
         url: '',
         method: 'POST',
@@ -69,10 +69,9 @@ export const ProjectApi = createApi({
       invalidatesTags: [{ type: 'Project', id: 'LIST' }]
     }),
     searchProject: builder.query<IProject[], SearchProjectRequest>({
-      query: (params) => ({
-        url: '/search',
-        method: 'GET',
-        body: params
+      query: ({ company }) => ({
+        url: `/search${company ? `?company=${company}` : ''}`,
+        method: 'GET'
       }),
       providesTags: [{ type: 'Project', id: 'LIST' }]
     }),
@@ -89,6 +88,18 @@ export const ProjectApi = createApi({
         body: project
       }),
       invalidatesTags: [{ type: 'Project', id: 'LIST' }]
+    }),
+    projectIsPm: builder.query<IProject, string>({
+      query: (projectId) => ({
+        url: `/is_pm/${projectId}`,
+        method: 'GET'
+      })
+    }),
+    getProjectFinance: builder.query({
+      query: (projectId: string) => ({
+        url: `/finance/${projectId}`,
+        method: 'GET'
+      })
     })
   })
 })
@@ -97,7 +108,9 @@ export const {
   useCreateProjectMutation,
   useSearchProjectQuery,
   useGetProjectQuery,
-  useUpdateProjectMutation
+  useUpdateProjectMutation,
+  useProjectIsPmQuery,
+  useGetProjectFinanceQuery
 } = ProjectApi
 
 interface ProjectState {

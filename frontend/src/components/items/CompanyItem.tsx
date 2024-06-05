@@ -1,11 +1,22 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
 
-export const CompanyItem = ({ title }: { title: string }) => {
+interface ICompanyItem {
+  title: string
+  subTitle: string
+  info?: string
+  isAdmin?: boolean
+  isPm?: boolean
+  isDeveloper?: boolean
+  teamMode?: boolean
+}
+
+export const CompanyItem = ({ title, subTitle, info, isAdmin, isPm, isDeveloper, teamMode }: ICompanyItem
+) => {
   return (
     <Box
       width={'300px'}
-      height={'90px'}
+      height={!teamMode ? '100px' : 'auto'}
       display={'flex'}
       justifyContent={'center'}
       alignItems={'center'}
@@ -21,7 +32,21 @@ export const CompanyItem = ({ title }: { title: string }) => {
         backgroundColor: 'rgba(243, 245, 249, .5)'
       }}
     >
-      <Typography fontSize={20}>{title}</Typography>
+      <Box
+        display={'flex'}
+        flexDirection={'column'}
+        justifyContent={'center'}
+        alignItems={'center'}
+        gap={'3px'}
+        overflow={'hidden'}
+      >
+        <Typography fontSize={20}>{title}</Typography>
+        <Typography fontSize={14}>{subTitle}</Typography>
+        {!!isAdmin && <Typography fontSize={14}>{isAdmin && 'Адмін'}</Typography>}
+        {!!isPm && <Typography fontSize={14}>{isPm && 'Проєкт менеджер'}</Typography>}
+        {!!isDeveloper && <Typography fontSize={14}>{isDeveloper && 'Розробник'}</Typography>}
+        <Typography fontSize={10}>{info}</Typography>
+      </Box>
     </Box>
   )
 }

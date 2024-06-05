@@ -5,10 +5,10 @@ import { serverURL } from 'src/config'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { RootState } from '.'
 
-interface RequestEmployee {
+export interface RequestEmployee {
   user?: number
   company?: number
-  is_project_manager: boolean
+  is_admin: boolean
   disabled: boolean
 }
 
@@ -28,19 +28,20 @@ export interface IEmployee {
     website: string
     logo: string
   }
-  is_project_manager: boolean
+  is_admin: boolean
   disabled: boolean
+  project_manager?: boolean
 }
 
 interface UpdateEmployee {
-  is_project_manager: boolean
+  is_admin: boolean
 }
 
 interface SearchEmployeeRequest {
-  id?: string
-  is_project_manager: boolean
-  disabled: boolean
-  company?: string
+  id?: number
+  is_admin?: boolean
+  disabled?: boolean
+  company?: number
   order_by?: '-id' | 'id' | 'user' | '-user' | 'company' | '-company'
 }
 
@@ -67,10 +68,9 @@ export const EmployeeApi = createApi({
       invalidatesTags: [{ type: 'Employee', id: 'LIST' }]
     }),
     searchEmployee: builder.query<IEmployee[], SearchEmployeeRequest>({
-      query: (params) => ({
-        url: '/search',
-        method: 'GET',
-        body: params
+      query: (arg: SearchEmployeeRequest) => ({
+        url: `/search${arg.company ? `?company=${arg.company}` : ''}`,
+        method: 'GET'
       }),
       providesTags: [{ type: 'Employee', id: 'LIST' }]
     }),
@@ -87,6 +87,20 @@ export const EmployeeApi = createApi({
         body: employee
       }),
       invalidatesTags: [{ type: 'Employee', id: 'LIST' }]
+    }),
+    employeeInvate: builder.mutation<IEmployee, { email: string, company_id: number }>({
+      query: ({ email, company_id }) => ({
+        url: '/invite',
+        method: 'POST',
+        body: { email, company_id }
+      }),
+      invalidatesTags: [{ type: 'Employee', id: 'LIST' }]
+    }),
+    getEmployeeByCompany: builder.query<IEmployee[], number>({
+      query: (companyId) => ({
+        url: `/byCompany/${companyId}`,
+        method: 'GET'
+      })
     })
   })
 })
@@ -95,7 +109,9 @@ export const {
   useCreateEmployeeMutation,
   useSearchEmployeeQuery,
   useGetEmployeeQuery,
-  useUpdateEmployeeMutation
+  useUpdateEmployeeMutation,
+  useEmployeeInvateMutation,
+  useGetEmployeeByCompanyQuery
 } = EmployeeApi
 
 interface EmployeeState {
