@@ -14,7 +14,7 @@ interface RequestUser {
 }
 
 export interface IUser {
-  id?: string
+  id?: number
   name: string
   surname: string
   email: string
@@ -25,7 +25,7 @@ export interface IUser {
 interface SearchUserRequest {
   email: string
   disabled?: boolean
-  id?: string
+  id?: number
   order_by?: '-id' | 'id'
 }
 
@@ -57,10 +57,9 @@ export const UserApi = createApi({
       invalidatesTags: [{ type: 'User', id: 'LIST' }]
     }),
     searchUser: builder.query<IUser[], SearchUserRequest>({
-      query: (params) => ({
-        url: '/search',
-        method: 'POST',
-        body: params
+      query: ({ email }) => ({
+        url: `/search${email ? `?email=${email}` : ''}`,
+        method: ' GET'
       }),
       providesTags: [{ type: 'User', id: 'LIST' }]
     }),
@@ -111,7 +110,7 @@ const initialState: UserState = {
   users: [],
   email: '',
   currentUser: {
-    id: '',
+    id: 0,
     name: '',
     surname: '',
     email: '',

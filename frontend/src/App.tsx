@@ -6,6 +6,8 @@ import Routes from './routes'
 import { Provider } from 'react-redux'
 import { store } from './store'
 import ErrorBoundary from './pages/ErrorBoundary'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 
 function App () {
   return (
@@ -13,9 +15,11 @@ function App () {
       <CssBaseline />
       <ErrorBoundary name="App">
         <ThemeProvider theme={theme}>
-          <Provider store={store}>
-            <Routes />
-          </Provider>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Provider store={store}>
+              <Routes />
+            </Provider>
+          </LocalizationProvider>
         </ThemeProvider>
       </ErrorBoundary>
     </>

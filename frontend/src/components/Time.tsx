@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react'
-
+import { Box, Typography } from '@mui/material'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
-import { Box, useTheme } from '@mui/material'
-import Typography from '@mui/material/Typography'
 import { format } from 'date-fns'
+import { uk } from 'date-fns/locale'
+import { useTheme } from '@mui/material/styles'
 
 export default function Time () {
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const theme = useTheme()
 
-  const currentDate = format(new Date(), 'dd MMM, yyyy')
-  const cuurrentTimeFormated = format(currentTime, 'HH:mm')
-  const dayOfWeek = format(currentTime, 'EEEE')
+  const currentDate = format(new Date(), 'dd MMMM, yyyy', { locale: uk })
+  const currentTimeFormatted = format(currentTime, 'HH:mm', { locale: uk })
+  const dayOfWeek = format(currentTime, 'EEEE', { locale: uk })
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -39,7 +39,7 @@ export default function Time () {
         <Box display="flex" gap={'4px'}>
           <AccessTimeIcon sx={{ color: theme.palette.text.secondary, width: '20px', height: '20px' }} />
           <Typography variant='body2'>
-            {cuurrentTimeFormated}
+            {currentTimeFormatted}
           </Typography>
         </Box>
       </Box>

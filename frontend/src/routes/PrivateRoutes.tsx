@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from 'src/components/Layout'
 import MiniLayout from 'src/components/MiniLayout'
 import CompanyPage from 'src/pages/CompanyPage'
-import FAQPage from 'src/pages/FAQPage'
 import ProfilePage from 'src/pages/ProfilePage'
 import ProjectPage from 'src/pages/ProjectPage'
 import TaskPage from 'src/pages/TaskPage'
@@ -17,7 +16,6 @@ const PrivateRoutes = () => {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="company" element={<CompanyPage />} />
         <Route path="project" element={<ProjectPage />} />
-        <Route path="faq" element={<FAQPage />} />
       </Route>
       <Route element={<MiniLayout />}>
         <Route path="team/:projectId/" element={<TeamPage />} />

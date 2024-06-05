@@ -1,19 +1,25 @@
 import React, { useEffect } from 'react'
 import { Box, Typography, useTheme } from '@mui/material'
 import WrapperPage from 'src/components/WrapperPage'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useGetMeQuery, IUser, setCurrentUserState } from 'src/store/users'
-import { useDispatch } from 'react-redux'
+import { selectCurrentUserState, setCurrentUserState, useGetMeQuery } from 'src/store/users'
 import CustomizedInput from 'src/components/CustomizedInput'
+import { useSelector, useDispatch } from 'react-redux'
+import { setCompanyState, useGetMeCompanyQuery } from 'src/store/company'
 
 const ProfilePage: React.FC = () => {
-  const dispatch = useDispatch()
   const theme = useTheme()
-  const { data } = useGetMeQuery()
+  const dispatch = useDispatch()
+  const currentUser = useSelector(selectCurrentUserState)
+  const { data: user } = useGetMeQuery()
+  const { data: companyData } = useGetMeCompanyQuery()
 
   useEffect(() => {
-    data && dispatch(setCurrentUserState(data))
-  }, [data])
+    companyData && dispatch(setCompanyState(companyData))
+  }, [companyData])
+
+  useEffect(() => {
+    user && dispatch(setCurrentUserState(user))
+  }, [user])
 
   return (
     <WrapperPage>
@@ -25,7 +31,7 @@ const ProfilePage: React.FC = () => {
         gap={'30px'}
       >
         <Typography fontSize={30} >
-        Мій профіль
+          Мій профіль
         </Typography>
         <Box sx={{
           display: 'flex',
@@ -35,11 +41,10 @@ const ProfilePage: React.FC = () => {
           <Typography variant='body1' sx={{
             color: theme.palette.text.primary,
             marginBottom: '4.5px'
-          }}>Name</Typography>
+          }}>Ім’я</Typography>
           <CustomizedInput
-            value={data?.name}
+            value={currentUser?.name}
             type='text'
-            placeholder='Enter Name'
           />
         </Box>
         <Box sx={{
@@ -50,11 +55,10 @@ const ProfilePage: React.FC = () => {
           <Typography variant='body1' sx={{
             color: theme.palette.text.primary,
             marginBottom: '4.5px'
-          }}>SurName</Typography>
+          }}>Прізвище</Typography>
           <CustomizedInput
-            value={data?.surname}
+            value={currentUser?.surname}
             type='text'
-            placeholder='Enter SurName'
           />
         </Box>
         <Box sx={{
@@ -65,11 +69,10 @@ const ProfilePage: React.FC = () => {
           <Typography variant='body1' sx={{
             color: theme.palette.text.primary,
             marginBottom: '4.5px'
-          }}>Email</Typography>
+          }}>Імейл</Typography>
           <CustomizedInput
-            value={data?.email}
+            value={currentUser?.email}
             type='text'
-            placeholder='Enter Email'
           />
         </Box>
       </Box>

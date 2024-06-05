@@ -6,13 +6,12 @@ import LeftBarItem from './items/LeftBarItem'
 
 const isMobile = window.innerWidth < 600
 
-const items = ['ПРОФІЛЬ', 'КОМПАНІЇ', 'ПРОЕКТИ', 'FAQ']
+const items = ['ПРОФІЛЬ', 'КОМПАНІЇ', 'ПРОЕКТИ']
 
 const routerList = [
   '/profile',
   '/company',
-  '/project',
-  '/faq'
+  '/project'
 ]
 
 const LeftBar = () => {
